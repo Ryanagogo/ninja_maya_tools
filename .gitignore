@@ -130,3 +130,9 @@ dmypy.json
 
 # pycharm
 .idea/
+.idea/*.xml
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/ninja_maya_tools.iml
+.idea/vcs.xml
