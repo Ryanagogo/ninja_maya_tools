@@ -24,7 +24,7 @@ class Control:
 			if info['form'] == 'periodic':
 				periodic = True
 			
-			curve_transform = pm.curve(p=info['cvs'], d=info['degree'], k=info['knots'], per=periodic)
+			curve_transform = pm.curve(p=info['positions'], d=info['degree'], k=info['knots'], per=periodic)
 			shape_nodes = curve_transform.getShapes()
 			for shape in shape_nodes:
 				pm.parent(shape, self.transform, r=True, shape=True)

@@ -42,7 +42,7 @@ def create(transform=None, name=None, file_path=None, print_data=False):
 		text += "        'degree': {},\n".format(degree)
 		
 		# cvs
-		text += "        'cvs': [\n"
+		text += "        'positions': [\n"
 		for index, cv in enumerate(cvs):
 			if index < len(cvs) - 1:
 				text += "            [{}, {}, {}],\n".format(cv[0], cv[1], cv[2])
