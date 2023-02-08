@@ -8,11 +8,34 @@ class Control:
 	def __init__(self):
 		self.transform = None
 	
-	def create(self, shape_type=None, **kwargs):
+	def create(self, shape_type=None, multi_shapes=None, **kwargs):
+		if shape_type is None and multi_shapes is None:
+			return
+		
 		self.create_transform(**kwargs)
-		self.set_shape(shape_type=shape_type, **kwargs)
+		
+		if shape_type is not None:
+			self.set_shape(shape_type=shape_type, **kwargs)
+		elif multi_shapes is not None:
+			self.set_multi_shapes(multi_shapes=multi_shapes, **kwargs)
+			
+	def set_multi_shapes(self, multi_shapes=None, **kwargs):
+		if multi_shapes is None:
+			return
+		
+		for shape_item in multi_shapes:
+			shape_type = shape_item.get('shape_type', None)
+			if shape_type is None:
+				continue
+			shape_item.pop('shape_type')
+			self.set_shape(shape_type=shape_type, **shape_item)
+		
+		self.transform_shape(**kwargs)
 	
 	def set_shape(self, shape_type=None, **kwargs):
+		if shape_type not in shape_data.shape_types:
+			return
+		
 		data = getattr(shape_data, shape_type)
 		
 		scale_values = kwargs.get('scale_values', None)
@@ -32,15 +55,63 @@ class Control:
 				self.scale_shape(shape_node=shape, values=scale_values)
 				self.rotate_shape(shape_node=shape, values=rotate_values)
 				self.translate_shape(shape_node=shape, values=translate_values)
+				self.set_line_attributes(shape_node=shape, **kwargs)
 			
 			pm.delete(curve_transform)
 		
 		self.fix_shape_names()
 	
+	def set_line_attributes(self, shape_node=None, **kwargs):
+		if shape_node is None:
+			return
+		
+		line_width = kwargs.get('line_width', -1)
+		index_color = kwargs.get('index_color', None)
+		rgb_color = kwargs.get('rgb_color', None)
+		
+		shape_node.lineWidth.set(line_width)
+		
+		if not pm.attributeQuery('ninjaShapeLineWidth', node=shape_node, exists=True):
+			pm.addAttr(shape_node, ln='ninjaShapeLineWidth', at='long')
+		
+		shape_node.ninjaShapeLineWidth.set(l=False)
+		shape_node.ninjaShapeLineWidth.set(line_width)
+		shape_node.ninjaShapeLineWidth.set(l=True)
+		
+		if index_color is not None:
+			shape_node.overrideEnabled.set(True)
+			shape_node.overrideRGBColors.set(False)
+			shape_node.overrideColor.set(index_color)
+			
+			if not pm.attributeQuery('ninjaShapeIndexColor', node=shape_node, exists=True):
+				pm.addAttr(shape_node, ln='ninjaShapeIndexColor', at='long')
+			
+			shape_node.ninjaShapeIndexColor.set(l=False)
+			shape_node.ninjaShapeIndexColor.set(index_color)
+			shape_node.ninjaShapeIndexColor.set(l=True)
+
+		elif rgb_color is not None:
+			shape_node.overrideEnabled.set(True)
+			shape_node.overrideRGBColors.set(True)
+			shape_node.overrideColorRGB.set(rgb_color)
+			
+			if not pm.attributeQuery('ninjaShapeRgbColor', node=shape_node, exists=True):
+				pm.addAttr(shape_node, ln='ninjaShapeRgbColor', at='double3')
+				pm.addAttr(shape_node, ln='ninjaShapeRgbColorR', at='double', p='ninjaShapeRgbColor')
+				pm.addAttr(shape_node, ln='ninjaShapeRgbColorG', at='double', p='ninjaShapeRgbColor')
+				pm.addAttr(shape_node, ln='ninjaShapeRgbColorB', at='double', p='ninjaShapeRgbColor')
+			
+			shape_node.ninjaShapeRgbColor.set(l=False)
+			shape_node.ninjaShapeRgbColor.set(rgb_color)
+			shape_node.ninjaShapeRgbColor.set(l=True)
+	
 	def replace_shape(self, shape_type=None, **kwargs):
 		if self.transform is None:
 			return
-			
+		
+		if shape_type not in shape_data.shape_types:
+			return
+
 		shape_nodes = self.transform.getShapes()
 		for shape in shape_nodes:
 			pm.delete(shape)
@@ -92,6 +163,9 @@ class Control:
 		if shape_node is None or shape_type is None:
 			return
 		
+		if shape_type not in shape_data.shape_types:
+			return
+
 		if not pm.attributeQuery('ninjaControlShape', node=self.transform, exists=True):
 			pm.addAttr(shape_node, ln='ninjaControlShape', at='message')
 		
@@ -106,14 +180,48 @@ class Control:
 		if shape_node is None or values is None:
 			return
 		shapes_tool.scale_shape(shape_node=shape_node, values=values)
+		if not pm.attributeQuery('ninjaShapeScale', node=shape_node, exists=True):
+			pm.addAttr(shape_node, ln='ninjaShapeScale', at='double3')
+			pm.addAttr(shape_node, ln='ninjaShapeScaleX', at='double', p='ninjaShapeScale')
+			pm.addAttr(shape_node, ln='ninjaShapeScaleY', at='double', p='ninjaShapeScale')
+			pm.addAttr(shape_node, ln='ninjaShapeScaleZ', at='double', p='ninjaShapeScale')
+		
+		shape_node.ninjaShapeScale.set(l=False)
+		shape_node.ninjaShapeScale.set(values)
+		shape_node.ninjaShapeScale.set(l=True)
 	
 	def rotate_shape(self, shape_node=None, values=None):
 		if shape_node is None or values is None:
 			return
 		shapes_tool.rotate_shape(shape_node=shape_node, values=values)
-
+		if not pm.attributeQuery('ninjaShapeRotate', node=shape_node, exists=True):
+			pm.addAttr(shape_node, ln='ninjaShapeRotate', at='double3')
+			pm.addAttr(shape_node, ln='ninjaShapeRotateX', at='double', p='ninjaShapeRotate')
+			pm.addAttr(shape_node, ln='ninjaShapeRotateY', at='double', p='ninjaShapeRotate')
+			pm.addAttr(shape_node, ln='ninjaShapeRotateZ', at='double', p='ninjaShapeRotate')
+		
+		shape_node.ninjaShapeRotate.set(l=False)
+		shape_node.ninjaShapeRotate.set(values)
+		shape_node.ninjaShapeRotate.set(l=True)
+	
 	def translate_shape(self, shape_node=None, values=None):
 		if shape_node is None or values is None:
 			return
 		shapes_tool.translate_shape(shape_node=shape_node, values=values)
+		if not pm.attributeQuery('ninjaShapeTranslate', node=shape_node, exists=True):
+			pm.addAttr(shape_node, ln='ninjaShapeTranslate', at='double3')
+			pm.addAttr(shape_node, ln='ninjaShapeTranslateX', at='double', p='ninjaShapeTranslate')
+			pm.addAttr(shape_node, ln='ninjaShapeTranslateY', at='double', p='ninjaShapeTranslate')
+			pm.addAttr(shape_node, ln='ninjaShapeTranslateZ', at='double', p='ninjaShapeTranslate')
+		
+		shape_node.ninjaShapeTranslate.set(l=False)
+		shape_node.ninjaShapeTranslate.set(values)
+		shape_node.ninjaShapeTranslate.set(l=True)
+
+
+def list_shape_types():
+	print('\nShape Types : ')
+	for shape_type in shape_data.shape_types:
+		print('    {}'.format(shape_type))
+	print('\n')
 		
