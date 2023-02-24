@@ -1,31 +1,6 @@
-import math
 import pymel.core as pm
 
 
-def fix_shape_names(transform=None):
-	if transform is None:
-		return
-	
-	accepted_transform_types = ['transform', 'joint']
-	
-	if pm.nodeType(transform) not in accepted_transform_types:
-		return
-	
-	shapes = transform.getShapes()
-	use_index = False
-	if len(shapes) > 1:
-		use_index = True
-	
-	nod = int(math.log10(len(shapes)))+1  # nod = number of digits
-	
-	for index, shape in enumerate(shapes):
-		name = '{}Shape'.format(transform.nodeName())
-		if use_index:
-			padded_number = str(index+1).zfill(nod+1)
-			name = '{}_{}Shape'.format(transform.nodeName(), padded_number)
-		shape.rename(name)
-
-	
 def scale_shape(shape_node=None, values=(1, 1, 1)):
 	if shape_node is None:
 		return
@@ -60,4 +35,3 @@ def translate_shape(shape_node=None, values=(0, 0, 0)):
 	elif pm.nodeType(shape_node) == 'mesh':
 		components = pm.ls(shape_node.vtx)
 		pm.move(values[0], values[1], values[2], components, r=True, os=True, xyz=True)
-

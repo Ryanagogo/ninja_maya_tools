@@ -2,6 +2,9 @@ import pymel.core as pm
 
 import shape_data
 from ..tools import shapes as shapes_tool
+from ninja_custom_data import custom_shape_data
+
+reload(custom_shape_data)
 
 
 class Control:
@@ -9,6 +12,7 @@ class Control:
 		self.transform = None
 	
 	def create(self, shape_type=None, multi_shapes=None, **kwargs):
+		#print('Control | create | shape_type={} , multi_shapes={} , kwargs={}'.format(shape_type, multi_shapes, kwargs))
 		if shape_type is None and multi_shapes is None:
 			return
 		
@@ -19,6 +23,8 @@ class Control:
 		elif multi_shapes is not None:
 			self.set_multi_shapes(multi_shapes=multi_shapes, **kwargs)
 			
+		return self.transform
+	
 	def set_multi_shapes(self, multi_shapes=None, **kwargs):
 		if multi_shapes is None:
 			return
@@ -29,14 +35,21 @@ class Control:
 				continue
 			shape_item.pop('shape_type')
 			self.set_shape(shape_type=shape_type, **shape_item)
-		
+
 		self.transform_shape(**kwargs)
 	
 	def set_shape(self, shape_type=None, **kwargs):
-		if shape_type not in shape_data.shape_types:
+		print('control -> set_shape | {}'.format(shape_type))
+		if shape_type.get('builtin', None):
+			#if shape_type['builtin'] not in shape_data.shape_types:
+			#	return
+			data = getattr(shape_data, shape_type['builtin'])
+		elif shape_type.get('custom', None):
+			#if shape_type['custom'] not in custom_shape_data.shape_types:
+			#	return
+			data = getattr(custom_shape_data, shape_type['custom'])
+		else:
 			return
-		
-		data = getattr(shape_data, shape_type)
 		
 		scale_values = kwargs.get('scale_values', None)
 		rotate_values = kwargs.get('rotate_values', None)
@@ -162,9 +175,6 @@ class Control:
 	def tag_shape(self, shape_node=None, shape_type=None):
 		if shape_node is None or shape_type is None:
 			return
-		
-		if shape_type not in shape_data.shape_types:
-			return
 
 		if not pm.attributeQuery('ninjaControlShape', node=self.transform, exists=True):
 			pm.addAttr(shape_node, ln='ninjaControlShape', at='message')
@@ -173,7 +183,10 @@ class Control:
 			pm.addAttr(shape_node, ln='ninjaControlShapeType', dt='string')
 		
 		shape_node.ninjaControlShapeType.set(l=False)
-		shape_node.ninjaControlShapeType.set(shape_type)
+		if shape_type.get('builtin', None) is not None:
+			shape_node.ninjaControlShapeType.set('builtin:{}'.format(shape_type['builtin']))
+		elif shape_type.get('custom', None) is not None:
+			shape_node.ninjaControlShapeType.set('custom:{}'.format(shape_type['custom']))
 		shape_node.ninjaControlShapeType.set(l=True)
 	
 	def scale_shape(self, shape_node=None, values=None):
