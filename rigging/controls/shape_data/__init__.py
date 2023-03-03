@@ -1,17 +1,17 @@
-import circle
-import cube
-import folded_circle
-import gear
-import ground
-import half_circle
-import head
-import left_foot
-import main
-import plane
-import root
-import sphere
-import square_pin
-import star
+from . import circle
+from . import cube
+from . import folded_circle
+from . import gear
+from . import ground
+from . import half_circle
+from . import head
+from . import left_foot
+from . import main
+from . import plane
+from . import root
+from . import sphere
+from . import square_pin
+from . import star
 
 shape_types = [
 	'circle',

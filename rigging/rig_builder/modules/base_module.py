@@ -1,8 +1,10 @@
 import pymel.core as pm
 
 from ... controls import control
+from ... import constants_data
 from ... tools import attributes
 from ... tools import connections
+from ... tools import name_builder
 
 
 class BaseModule(object):
@@ -251,6 +253,29 @@ class BaseModule(object):
 			if not hasattr(self, key):
 				continue
 			setattr(self, key, data[key])
+	
+	def add_rig_pose(self, driver_node=None, driven_node=None, poses=('default', 'anim')):
+		if driver_node is None or driven_node is None:
+			return
+		
+		if not pm.attributeQuery('rigPose', node=driver_node, exists=True):
+			enum = ''
+			for pose in poses:
+				enum += '{}:'.format(pose)
+			pm.addAttr(driver_node, ln='rigPose', at='enum', en=enum)
+			driver_node.rigPose.set(k=True)
+		
+		basename = driven_node.nodeName()
+		rig_pose_choice = pm.createNode('choice', name='{}_rigPose_choice'.format(basename))
+		rig_pose_choice.output.connect(driven_node.offsetParentMatrix)
+		driver_node.rigPose.connect(rig_pose_choice.selector)
+		
+		for index, pose in enumerate(poses):
+			compose_matrix = pm.createNode('composeMatrix', name='{}_{}_rigPose_composeMatrix'.format(basename, pose))
+			compose_matrix.outputMatrix.connect(rig_pose_choice.input[index])
+			
+			for attr in ['it', 'itx', 'ity', 'itz', 'ir', 'irx', 'iry', 'irz', 'is', 'isx', 'isy', 'isz']:
+				compose_matrix.attr(attr).set(k=True)
 
 
 class Nodes:
@@ -262,7 +287,43 @@ class Nodes:
 		setattr(self, '{}_type'.format(node_key), node_type)
 	
 	def get_node(self, node_key):
+		if node_key is None:
+			return None
 		return getattr(self, node_key, None)
 	
 	def get_type(self, node_key):
+		if node_key is None:
+			return None
 		return getattr(self, '{}_type'.format(node_key), None)
+	
+	def create_group(self, node_key=None, **kwargs):
+		print('Nodes | create_group | {} | {}'.format(node_key, kwargs))
+		if node_key is None:
+			return
+		
+		name = kwargs.get('name', None)
+		if name is None:
+			setattr(self, node_key, None)
+			return
+		
+		node = pm.createNode('transform', name=name)
+		setattr(self, node_key, node)
+		return node
+	
+	def create_control(self, node_key=None, **kwargs):
+		print('Nodes | create_control | {} | {}'.format(node_key, kwargs))
+		if node_key is None:
+			return
+		
+		control_data = kwargs.get('control_data', None)
+		if control_data is None:
+			setattr(self, node_key, None)
+			return
+
+		control_object = control.Control()
+		node = control_object.create(**control_data)
+		setattr(self, node_key, node)
+		return node
+
+		
+		

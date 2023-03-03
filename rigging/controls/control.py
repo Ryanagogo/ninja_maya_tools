@@ -1,10 +1,10 @@
 import pymel.core as pm
 
-import shape_data
+from . import shape_data
 from ..tools import shapes as shapes_tool
 from ninja_custom_data import custom_shape_data
 
-reload(custom_shape_data)
+# reload(custom_shape_data)
 
 
 class Control:

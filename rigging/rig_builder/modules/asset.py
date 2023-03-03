@@ -6,6 +6,8 @@ from ... tools import name_builder
 
 
 class Module(base_module.BaseModule):
+	"""The rig module needed to build the initial asset groups for the model and rig"""
+	
 	def __init__(self, identifier='rig_asset', version='2023.02.06', constants_key='default'):
 		super(Module, self).__init__()
 		
@@ -36,7 +38,10 @@ class Module(base_module.BaseModule):
 			self.nodes.initialize(node_key=node_key, node_type=node_data['node_type'])
 			
 		self.nodes.initialize(node_key='module_data', node_type='module_data')
-
+	
+	def __repr__(self):
+		return "asset.Module(identifier='{}', version='{}', constants_key='{}')".format(self.identifier, self.version, self.constants_key)
+	
 	def create(self):
 		self.find()
 		

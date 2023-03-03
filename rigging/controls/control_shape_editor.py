@@ -13,14 +13,19 @@ from shiboken2 import wrapInstance
 import glob
 import os
 import json
+import sys
+import platform
 
-import shape_data
-import control
+if '3' == platform.python_version()[0]:
+	from importlib import reload
+
+from . import shape_data
+from . import control
 from .. import shape_tools
 from ... general.file import custom_data
 
 mayaMainWindowPtr = omui.MQtUtil.mainWindow()
-mayaMainWindow = wrapInstance(long(mayaMainWindowPtr), QWidget)
+mayaMainWindow = wrapInstance(int(mayaMainWindowPtr), QWidget)
 
 
 class NinjaControlShapeEditor(QWidget):
@@ -314,6 +319,14 @@ class NinjaControlShapeEditor(QWidget):
 	
 		self.updated_custom_shape_data_init()
 		self.update_shapes_tree_view()
+		self.cleanup_custom_shape_pyc()
+	
+	def cleanup_custom_shape_pyc(self):
+		shape_data_path = self.check_custom_shape_data_package()
+		all_files = glob.glob('{}/*.pyc'.format(shape_data_path))
+		for file in all_files:
+			file_path = os.path.join(shape_data_path, file)
+			os.remove(file_path)
 	
 	def updated_custom_shape_data_init(self):
 		shape_data_path = self.check_custom_shape_data_package()
@@ -335,7 +348,7 @@ class NinjaControlShapeEditor(QWidget):
 		text = ''
 		
 		for module_name in module_names:
-			text += 'import {}\n'.format(module_name)
+			text += 'from . import {}\n'.format(module_name)
 		
 		text += '\n'
 		text += 'shape_types = [\n'

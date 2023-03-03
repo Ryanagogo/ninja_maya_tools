@@ -1,7 +1,7 @@
 import pymel.core as pm
 
-import node_data
-import names
+from . import node_data
+from . import names
 
 
 class CopyPaste:
