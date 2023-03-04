@@ -2,6 +2,7 @@ import pymel.core as pm
 
 from . import shape_data
 from ..tools import shapes as shapes_tool
+from .. shape_tools import node_data
 from ninja_custom_data import custom_shape_data
 
 # reload(custom_shape_data)
@@ -126,10 +127,33 @@ class Control:
 			return
 
 		shape_nodes = self.transform.getShapes()
+		shapes_data = []
 		for shape in shape_nodes:
+			data = self.get_shape_data(shape)
+			shapes_data.append(data)
 			pm.delete(shape)
 		
-		self.set_shape(shape_type=shape_type, **kwargs)
+		self.set_shape(shape_type=shape_type, shapes_data=shapes_data, **kwargs)
+	
+	def set_shape_data(self, node=None):
+		pass
+	
+	def get_shape_data(self, node=None):
+		data = node_data.get_shape_data(node)
+		custom_attrs = [
+			'ninjaShapeTranslate',
+			'ninjaShapeRotate',
+			'ninjaShapeScale',
+			'ninjaShapeLineWidth',
+			'ninjaShapeIndexColor',
+			'ninjaShapeRgbColor',
+		]
+		
+		for custom_attr in custom_attrs:
+			if pm.attributeQuery(custom_attr, node=node, exists=True):
+				data[custom_attr] = node.attr(custom_attr).get()
+		
+		return data
 	
 	def transform_shape(self, **kwargs):
 		if self.transform is None:
@@ -200,7 +224,8 @@ class Control:
 			pm.addAttr(shape_node, ln='ninjaShapeScaleZ', at='double', p='ninjaShapeScale')
 		
 		shape_node.ninjaShapeScale.set(l=False)
-		shape_node.ninjaShapeScale.set(values)
+		current_values = shape_node.ninjaShapeScale.get()
+		shape_node.ninjaShapeScale.set(current_values+values)
 		shape_node.ninjaShapeScale.set(l=True)
 	
 	def rotate_shape(self, shape_node=None, values=None):
@@ -214,7 +239,8 @@ class Control:
 			pm.addAttr(shape_node, ln='ninjaShapeRotateZ', at='double', p='ninjaShapeRotate')
 		
 		shape_node.ninjaShapeRotate.set(l=False)
-		shape_node.ninjaShapeRotate.set(values)
+		current_values = shape_node.ninjaShapeRotate.get()
+		shape_node.ninjaShapeRotate.set(current_values+values)
 		shape_node.ninjaShapeRotate.set(l=True)
 	
 	def translate_shape(self, shape_node=None, values=None):
@@ -228,7 +254,8 @@ class Control:
 			pm.addAttr(shape_node, ln='ninjaShapeTranslateZ', at='double', p='ninjaShapeTranslate')
 		
 		shape_node.ninjaShapeTranslate.set(l=False)
-		shape_node.ninjaShapeTranslate.set(values)
+		current_values = shape_node.ninjaShapeTranslate.get()
+		shape_node.ninjaShapeTranslate.set(current_values+values)
 		shape_node.ninjaShapeTranslate.set(l=True)
 
 
