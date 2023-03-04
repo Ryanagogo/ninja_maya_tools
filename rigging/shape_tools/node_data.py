@@ -33,3 +33,11 @@ def get_shape_data(node=None):
 		)
 		
 	return shape_data
+
+
+def set_shape_data(node=None, data=None):
+	pass
+
+
+def add_to_shape_data(node=None, data=None):
+	pass
